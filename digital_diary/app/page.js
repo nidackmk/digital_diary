@@ -3,59 +3,51 @@ import React, { useState, useEffect } from 'react';
 import {
   collection,
   addDoc,
-  getDoc,
-  querySnapshot,
   query,
   onSnapshot,
   deleteDoc,
   doc,
+  serverTimestamp, // Ekledik
 } from 'firebase/firestore';
 import { db } from './firebase';
 
+
 export default function Home() {
-  const [items, setItems] = useState([
-    // { name: 'Coffee', price: 4.95 },
-    // { name: 'Movie', price: 24.95 },
-    // { name: 'candy', price: 7.95 },
-  ]);
-  const [newItem, setNewItem] = useState({ name: ''});
-  //const [total, setTotal] = useState(0);
+  const [items, setItems] = useState([]);
+  const [newItem, setNewItem] = useState({ metin: ''});
+
 
   // Add item to database
   const addItem = async (e) => {
     e.preventDefault();
-    if (newItem.name !== '') {
-      // setItems([...items, newItem]);
+    if (newItem.metin !== '') {
       await addDoc(collection(db, 'items'), {
-        name: newItem.name.trim(),
+        metin: newItem.metin.trim(),
+        createdAt: serverTimestamp(), // Tarih bilgisini ekledik
       });
-      setNewItem({ name: ''});
+      setNewItem({ metin: ''});
     }
   };
 
-  // Read items from database
-  useEffect(() => {
-    const q = query(collection(db, 'items'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      let itemsArr = [];
 
-      querySnapshot.forEach((doc) => {
-        itemsArr.push({ ...doc.data(), id: doc.id });
-      });
-      setItems(itemsArr);
+ // Read items from database
+useEffect(() => {
+  const q = query(collection(db, 'items'));
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    let itemsArr = [];
 
-      // // Read total from itemsArr
-      // const calculateTotal = () => {
-      //   const totalPrice = itemsArr.reduce(
-      //     (sum, item) => sum + parseFloat(item.price),
-      //     0
-      //   );
-      //   setTotal(totalPrice);
-      // };
-      // calculateTotal();
-      return () => unsubscribe();
+    querySnapshot.forEach((doc) => {
+      itemsArr.push({ ...doc.data(), id: doc.id });
     });
-  }, []);
+
+    // Sıralama işlemini burada gerçekleştiriyoruz
+    itemsArr.sort((a, b) => b.createdAt - a.createdAt);
+
+    setItems(itemsArr);
+    return () => unsubscribe();
+  });
+}, []);
+
 
   // Delete items from database
   const deleteItem = async (id) => {
@@ -69,8 +61,8 @@ export default function Home() {
         <div className='bg-slate-800 p-4 rounded-lg'>
           <form className='grid grid-cols-6 items-center text-black'>
             <textarea 
-              value={newItem.name}
-              onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+              value={newItem.metin}
+              onChange={(e) => setNewItem({ ...newItem, metin: e.target.value })}
               className='textarea textarea-success col-span-3 p-3 border mb-3'
               type='text'
               placeholder='Dear Diary, '
@@ -90,8 +82,8 @@ export default function Home() {
                 className='my-4 w-full flex justify-between bg-slate-950'
               >
                 <div className='p-4 w-full flex justify-between'>
-                  <span className='capitalize'>{item.name}</span>
-                  
+                  <span className='capitalize'>{item.metin}</span>
+                  <span className='text-sm'>{item.createdAt && item.createdAt.toDate().toLocaleString()}</span> {/* Ekledik */}
                 </div>
                 <button
                   onClick={() => deleteItem(item.id)}
