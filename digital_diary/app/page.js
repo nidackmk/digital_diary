@@ -31,8 +31,8 @@ export default function Home() {
   };
 
   useEffect(() => {
-    //toast if item metin count > 30 show toast
-    if (newItem.metin.length > 98) {
+    //Kelime sınırı aşıldığında uyarı gösterme
+    if (newItem.metin.length > 3000) {
       setAlertShow(true);
     }
   }, [newItem.metin]);
@@ -60,6 +60,12 @@ export default function Home() {
     await deleteDoc(doc(db, "items", id));
   };
 
+
+  //Metin çok uzun olduğu zaman kutucukların içinden taşma oluyordu. Belli bir uzunluk sınırı ekleyerek bunu önledik
+  function truncateText(text, maxLength) {
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center bg-black">
       <div className="w-full relative">
@@ -84,15 +90,15 @@ export default function Home() {
             <span className="text-slate-900">Yazı sınırınızı aştınız...</span>
           </div>
         )}
-        <h1 className="text-3xl font-light text-white w-96 px-2">Lets write a diary</h1>
+        <h1 className="text-3xl font-light text-white w-96 px-2">Sevgili günlük, </h1>
         <div className="flex flex-col justify-between items-start px-2 py-8 gap-4">
           <textarea
             value={newItem.metin}
             onChange={(e) => setNewItem({ ...newItem, metin: e.target.value })}
             className="textarea textarea-success bg-gray-800 border w-full text-slate-300"
-            maxLength="100"
+            maxLength="3002"
             type="text"
-            placeholder="Dear Diary, "
+            placeholder="Bugün... "
             rows={8} // Burada rows özelliğini ekledik, istediğiniz satır sayısını belirleyebilirsiniz
           />
 
@@ -102,7 +108,7 @@ export default function Home() {
         </div>
         <hr className="border-gray-600" />
         <div className="px-2 py-7">
-          <h1 className="text-4xl font-light text-white">Diarys</h1>
+          <h1 className="text-3xl font-light text-white">Günlüklerim</h1>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 sm:grid-cols-2 gap-12 mt-4">
           {items.map((item, id) => (
@@ -128,7 +134,7 @@ export default function Home() {
                       document.getElementById("my_modal_3").showModal();
                     }}
                   >
-                    <p className="text-slate-300 font-light">{item.metin}</p>
+                    <p className="text-slate-300 font-light ">{truncateText(item.metin, 500)}</p>
                   </div>
 
                   <dialog id="my_modal_3" className="modal">
