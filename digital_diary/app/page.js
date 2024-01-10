@@ -7,7 +7,7 @@ import {
   onSnapshot,
   deleteDoc,
   doc,
-  serverTimestamp, // Ekledik
+  serverTimestamp, // Traih alanı için ekledik
 } from "firebase/firestore";
 import { db } from "./firebase";
 import Image from "next/image";
@@ -18,7 +18,7 @@ export default function Home() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [alertShow, setAlertShow] = useState(false);
 
-  // Add item to database
+  // Firebase'e veri ekleme
   const addItem = async (e) => {
     e.preventDefault();
     if (newItem.metin !== "") {
@@ -37,7 +37,7 @@ export default function Home() {
     }
   }, [newItem.metin]);
 
-  // Read items from database
+  // Firebase'den verileri okuma
   useEffect(() => {
     const q = query(collection(db, "items"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -55,20 +55,21 @@ export default function Home() {
     });
   }, []);
 
-  // Delete items from database
+  // Firebase'den veri silme
   const deleteItem = async (id) => {
     await deleteDoc(doc(db, "items", id));
   };
 
 
-  //Metin çok uzun olduğu zaman kutucukların içinden taşma oluyordu. Belli bir uzunluk sınırı ekleyerek bunu önledik
+  // Metin çok uzun olduğu zaman kutucukların içinden taşma oluyordu. 
+  // Belli bir uzunluk sınırı ekleyerek bunu önledik
   function truncateText(text, maxLength) {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   }
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-black">
-      <div className="w-full relative">
+      <div className="w-full relative shadow-lg shadow-green-900">
         <Image src="/appbar.png" alt="hero" width={1920} height={500} style={{ objectFit: "cover", height: "300px", width: "100%" }} />
         <div className="absolute top-24 left-4 w-full">
           <h1 className="text-3xl font-bold text-white w-96">Bugünü not alın, Yaşadığınız anların Güzelliklerini keşfedin!</h1>
@@ -95,11 +96,11 @@ export default function Home() {
           <textarea
             value={newItem.metin}
             onChange={(e) => setNewItem({ ...newItem, metin: e.target.value })}
-            className="textarea textarea-success bg-gray-800 border w-full text-slate-300"
+            className="textarea textarea-success bg-gray-800 border w-full text-slate-300 shadow-lg shadow-green-900"
             maxLength="3002"
             type="text"
             placeholder="Bugün... "
-            rows={8} // Burada rows özelliğini ekledik, istediğiniz satır sayısını belirleyebilirsiniz
+            rows={8}
           />
 
           <button onClick={addItem} className="btn btn-outline btn-success bg-gray-800 shadow-md hover:shadow-lg " type="submit">
@@ -128,7 +129,7 @@ export default function Home() {
                 <div>
                   <hr className="border-gray-600" />
                   <div
-                    className="text-sm  cursor-pointer pt-4"
+                    className="text-sm cursor-pointer pt-4"
                     onClick={() => {
                       setSelectedItem(item.metin);
                       document.getElementById("my_modal_3").showModal();
