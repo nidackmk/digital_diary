@@ -11,7 +11,8 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import Image from "next/image";
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [items, setItems] = useState([]);
@@ -19,14 +20,29 @@ export default function Home() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [alertShow, setAlertShow] = useState(false);
 
+  //useRouter ile sayfa yönlendirmesi
+  const router = useRouter();
+
   const auth = getAuth();
 
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
+
+  //if firebaseuser not logged in redirect to login page
+  useEffect(() => {
+    //check localstorage for user
+    const data = localStorage.getItem("user");
+    if (data) {
+      router.push("/");
+    } else {
+      router.push("/Login");
+    }
+  }, [user]);
 
   // Firebase Authentication'dan kullanıcının oturum durumunu takip etmek için
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      localStorage.setItem("user", JSON.stringify(user));
     });
 
     return () => unsubscribe();
@@ -51,42 +67,40 @@ export default function Home() {
       setAlertShow(true);
     }
   }, [newItem.metin]);
-  
 
-// Firebase'den verileri okuma
-useEffect(() => {
-  const q = query(collection(db, "items"));
-  const unsubscribe = onSnapshot(q, (querySnapshot) => {
-    let itemsArr = [];
+  // Firebase'den verileri okuma
+  useEffect(() => {
+    const q = query(collection(db, "items"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      let itemsArr = [];
 
-    querySnapshot.forEach((doc) => {
-      itemsArr.push({ ...doc.data(), id: doc.id });
+      querySnapshot.forEach((doc) => {
+        itemsArr.push({ ...doc.data(), id: doc.id });
+      });
+
+      // Sıralama işlemini burada gerçekleştiriyoruz
+      itemsArr.sort((a, b) => b.createdAt - a.createdAt);
+
+      // Eğer kullanıcı giriş yapmışsa, sadece kendi günlüklerini göster
+      if (user) {
+        itemsArr = itemsArr.filter((item) => item.userEmail === user.email);
+      }
+
+      setItems(itemsArr);
     });
 
-    // Sıralama işlemini burada gerçekleştiriyoruz
-    itemsArr.sort((a, b) => b.createdAt - a.createdAt);
-
-    // Eğer kullanıcı giriş yapmışsa, sadece kendi günlüklerini göster
-    if (user) {
-      itemsArr = itemsArr.filter((item) => item.userEmail === user.email);
-    }
-
-    setItems(itemsArr);
-  });
-
-  return () => unsubscribe();
-}, [user]);
+    return () => unsubscribe();
+  }, [user]);
 
   // Firebase'den veri silme
   const deleteItem = async (id) => {
     await deleteDoc(doc(db, "items", id));
   };
 
-
-  // Metin çok uzun olduğu zaman kutucukların içinden taşma oluyordu. 
+  // Metin çok uzun olduğu zaman kutucukların içinden taşma oluyordu.
   // Belli bir uzunluk sınırı ekleyerek bunu önledik
   function truncateText(text, maxLength) {
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
   }
 
   return (
@@ -113,7 +127,18 @@ useEffect(() => {
             <span className="text-slate-900">Yazı sınırınızı aştınız...</span>
           </div>
         )}
-        <h1 className="text-3xl font-light text-white w-96 px-2">Sevgili günlük, </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-light text-white w-96 px-2">Sevgili günlük, </h1>
+          <button
+            onClick={() => {
+              localStorage.removeItem("user");
+              router.push("/Login");
+            }}
+            className="btn btn-outline btn-error bg-gray-800 shadow-md hover:shadow-lg "
+          >
+            Çıkış Yap
+          </button>
+        </div>
         <div className="flex flex-col justify-between items-start px-2 py-8 gap-4">
           <textarea
             value={newItem.metin}
@@ -179,7 +204,6 @@ useEffect(() => {
             </div>
           ))}
         </div>
-
         {items.length < 1 ? "" : <div className="flex justify-between p-3"></div>}
       </div>
     </main>
