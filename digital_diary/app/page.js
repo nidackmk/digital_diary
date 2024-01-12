@@ -11,12 +11,26 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import Image from "next/image";
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 export default function Home() {
   const [items, setItems] = useState([]);
   const [newItem, setNewItem] = useState({ metin: "" });
   const [selectedItem, setSelectedItem] = useState(null);
   const [alertShow, setAlertShow] = useState(false);
+
+  const auth = getAuth();
+
+  const [user, setUser] = useState(null);
+
+  // Firebase Authentication'dan kullanıcının oturum durumunu takip etmek için
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+
+    return () => unsubscribe();
+  }, [auth]);
 
   // Firebase'e veri ekleme
   const addItem = async (e) => {
@@ -25,6 +39,7 @@ export default function Home() {
       await addDoc(collection(db, "items"), {
         metin: newItem.metin.trim(),
         createdAt: serverTimestamp(), // Tarih bilgisini ekledik
+        userEmail: user ? user.email : null, // Kullanıcının e-posta bilgisini kaydediyoruz
       });
       setNewItem({ metin: "" });
     }
@@ -36,24 +51,31 @@ export default function Home() {
       setAlertShow(true);
     }
   }, [newItem.metin]);
+  
 
-  // Firebase'den verileri okuma
-  useEffect(() => {
-    const q = query(collection(db, "items"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      let itemsArr = [];
+// Firebase'den verileri okuma
+useEffect(() => {
+  const q = query(collection(db, "items"));
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    let itemsArr = [];
 
-      querySnapshot.forEach((doc) => {
-        itemsArr.push({ ...doc.data(), id: doc.id });
-      });
-
-      // Sıralama işlemini burada gerçekleştiriyoruz
-      itemsArr.sort((a, b) => b.createdAt - a.createdAt);
-
-      setItems(itemsArr);
-      return () => unsubscribe();
+    querySnapshot.forEach((doc) => {
+      itemsArr.push({ ...doc.data(), id: doc.id });
     });
-  }, []);
+
+    // Sıralama işlemini burada gerçekleştiriyoruz
+    itemsArr.sort((a, b) => b.createdAt - a.createdAt);
+
+    // Eğer kullanıcı giriş yapmışsa, sadece kendi günlüklerini göster
+    if (user) {
+      itemsArr = itemsArr.filter((item) => item.userEmail === user.email);
+    }
+
+    setItems(itemsArr);
+  });
+
+  return () => unsubscribe();
+}, [user]);
 
   // Firebase'den veri silme
   const deleteItem = async (id) => {
