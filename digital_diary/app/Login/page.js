@@ -42,20 +42,20 @@ const SignIn = () => {
             />
             <input
               type="password"
-              placeholder="Password"
+              placeholder="Şifre"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-3 mb-4 bg-gray-900 rounded-xl outline-none text-white placeholder-gray-500"
             />
             <button onClick={handleSignIn} className="w-full p-3 bg-gray-900 rounded-2xl text-green-600 font-light text-lg hover:bg-green-900">
-              Sign In
+              Giriş Yap
             </button>
 
             <div className="flex items-center justify-between mt-4">
-              <a href="#" className="text-xs text-gray-100 uppercase cursor-pointer">
+              <a href="#" className="text-xs text-gray-100 cursor-pointer">
                 Hesabın Yok Mu ?{" "}
               </a>
-              <a onClick={() => router.push("/Signup")} href="#" className="text-xs text-gray-100 uppercase cursor-pointer">
+              <a onClick={() => router.push("/Signup")} href="#" className="text-xs text-gray-100 cursor-pointer">
                 Kayıt Ol !
               </a>
             </div>
