@@ -25,24 +25,42 @@ export default function Home() {
 
   const auth = getAuth();
 
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
+  const [user, setUser] = useState();
+
+  const logout = () => {
+    setUser("");
+    typeof window !== "undefined" && localStorage.removeItem("user");
+  };
 
   //if firebaseuser not logged in redirect to login page
   useEffect(() => {
     //check localstorage for user
     const data = localStorage.getItem("user");
-    if (data) {
+    if (data != null) {
       router.push("/");
     } else {
       router.push("/Login");
     }
   }, [user]);
 
+  useEffect(() => {
+    //check localstorage for user
+    const data = localStorage.getItem("user");
+    if (data != null) {
+      setUser(JSON.parse(data));
+    } else {
+      router.push("/Login");
+    }
+  }, []);
+
   // Firebase Authentication'dan kullanıcının oturum durumunu takip etmek için
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      localStorage.setItem("user", JSON.stringify(user));
+      if (user) {
+        setUser(user);
+
+        localStorage.setItem("user", true);
+      }
     });
 
     return () => unsubscribe();
@@ -129,14 +147,24 @@ export default function Home() {
         )}
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-light text-white w-96 px-2">Sevgili günlük, </h1>
-          <button
-            onClick={() => {
-              localStorage.removeItem("user");
-              router.push("/Login");
-            }}
-            className="btn btn-outline btn-error bg-gray-800 shadow-md hover:shadow-lg "
-          >
-            Çıkış Yap <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          <button onClick={logout} className="btn btn-outline btn-error bg-gray-800 shadow-md hover:shadow-lg ">
+            Çıkış Yap{" "}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="feather feather-log-out"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
           </button>
         </div>
         <div className="flex flex-col justify-between items-start px-2 py-8 gap-4">
